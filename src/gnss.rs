@@ -44,9 +44,9 @@ pub enum GnssData {
 	},
 	/// A Nordic-supplied structure containing position, time and SV
 	/// information.
-	Position(sys::nrf_gnss_pvt_data_frame_t),
+	Position(sys::nrf_modem_gnss_pvt_data_frame),
 	/// AGPS data
-	Agps(sys::nrf_gnss_agps_data_frame_t),
+	Agps(sys::nrf_modem_gnss_agps_data_frame),
 }
 
 /// Specifies which NMEA fields you want from the GNSS sub-system.
@@ -58,15 +58,15 @@ pub struct NmeaMask(u16);
 #[repr(u16)]
 pub enum NmeaField {
 	/// Enables Global Positioning System Fix Data.
-	GpsFixData = sys::NRF_GNSS_NMEA_GGA_MASK as u16,
+	GpsFixData = sys::NRF_MODEM_GNSS_NMEA_GGA_MASK as u16,
 	/// Enables Geographic Position Latitude/Longitude and time.
-	LatLongTime = sys::NRF_GNSS_NMEA_GLL_MASK as u16,
+	LatLongTime = sys::NRF_MODEM_GNSS_NMEA_GLL_MASK as u16,
 	/// Enables DOP and active satellites.
-	DopAndActiveSatellites = sys::NRF_GNSS_NMEA_GSA_MASK as u16,
+	DopAndActiveSatellites = sys::NRF_MODEM_GNSS_NMEA_GSA_MASK as u16,
 	/// Enables Satellites in view.
-	SatellitesInView = sys::NRF_GNSS_NMEA_GSV_MASK as u16,
+	SatellitesInView = sys::NRF_MODEM_GNSS_NMEA_GSV_MASK as u16,
 	/// Enables Recommended minimum specific GPS/Transit data.
-	RecommendedMinimumSpecificFixData = sys::NRF_GNSS_NMEA_RMC_MASK as u16,
+	RecommendedMinimumSpecificFixData = sys::NRF_MODEM_GNSS_NMEA_RMC_MASK as u16,
 }
 
 /// Specifies which non-volatile fields you want to delete before starting the GNSS.
@@ -160,6 +160,7 @@ impl GnssSocket {
 		Ok(())
 	}
 
+	/*
 	/// Get the current Fix Interval (in seconds).
 	///
 	/// See `set_fix_interval` for more information.
@@ -181,7 +182,9 @@ impl GnssSocket {
 			Ok(value)
 		}
 	}
+	*/
 
+	/*
 	/// Get the Fix Retry time (in seconds).
 	///
 	/// See `set_fix_retry` for more information.
@@ -204,6 +207,8 @@ impl GnssSocket {
 		}
 	}
 
+	 */
+
 	/// Set the NMEA mask.
 	///
 	/// You can select which particular NMEA strings you want from the GNSS socket here.
@@ -216,6 +221,7 @@ impl GnssSocket {
 		Ok(())
 	}
 
+	/*
 	/// Get the current NMEA mask.
 	///
 	/// See `set_nmea_mask`.
@@ -237,7 +243,9 @@ impl GnssSocket {
 			Ok(NmeaMask(value))
 		}
 	}
+	 */
 
+	/*
 	/// Get a fix from the GNSS system.
 	///
 	/// Performs a read on the GNSS socket. The Nordic library determines which
@@ -256,7 +264,9 @@ impl GnssSocket {
 		};
 		self.process_fix(result, frame)
 	}
+	 */
 
+	/*
 	/// Wait for a fix from the GNSS system.
 	///
 	/// Performs a read on the GNSS socket and returns either a
@@ -276,7 +286,9 @@ impl GnssSocket {
 		};
 		self.process_fix(result, frame)
 	}
+	 */
 
+	/*
 	/// Parse the data returned from a GNSS socket read.
 	///
 	/// We get either an NMEA frame, a Position frame, or an AGPS frame. We
@@ -343,6 +355,7 @@ impl GnssSocket {
 			}
 		}
 	}
+	 */
 }
 
 impl Pollable for GnssSocket {
@@ -376,7 +389,7 @@ impl GnssData {
 	pub fn is_valid(&self) -> bool {
 		match self {
 			GnssData::Nmea { .. } => false,
-			GnssData::Position(p) => (p.flags & sys::NRF_GNSS_PVT_FLAG_FIX_VALID_BIT as u8) != 0,
+			GnssData::Position(p) => (p.flags & sys::NRF_MODEM_GNSS_PVT_FLAG_FIX_VALID as u8) != 0,
 			GnssData::Agps { .. } => false,
 		}
 	}

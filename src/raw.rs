@@ -45,14 +45,14 @@ pub(crate) enum SocketOption<'a> {
 	TlsTagList(&'a [sys::nrf_sec_tag_t]),
 	/// Defines the interval between each fix in seconds. The default is 1. A
 	/// value of 0 means single-fix mode.
-	GnssFixInterval(sys::nrf_gnss_fix_interval_t),
+	GnssFixInterval(u16),
 	/// Defines how long (in seconds) the receiver should try to get a fix.
 	/// The default is 60 seconds. 0 means wait forever.
-	GnssFixRetry(sys::nrf_gnss_fix_retry_t),
+	GnssFixRetry(u16),
 	/// Controls which, if any, NMEA frames are provided by the GNSS system
-	GnssNmeaMask(sys::nrf_gnss_nmea_mask_t),
+	GnssNmeaMask(u16),
 	/// Starts the GNSS system, after deleting the specified non-volatile values.
-	GnssStart(sys::nrf_gnss_delete_mask_t),
+	GnssStart(u32),
 	/// Stops the GNSS system
 	GnssStop,
 }
@@ -184,7 +184,7 @@ impl Socket {
 	pub fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		let length = buf.len();
 		let ptr = buf.as_ptr();
-		let result = unsafe { sys::nrf_write(self.fd, ptr as *const _, length as u32) };
+		let result = unsafe { sys::nrf_send(self.fd, ptr as *const _, length as u32, 0) };
 		if result < 0 {
 			Err(Error::Nordic("write", result as i32, get_last_error()))
 		} else {
@@ -255,25 +255,27 @@ impl<'a> SocketOption<'a> {
 			SocketOption::TlsPeerVerify(_) => sys::NRF_SOL_SECURE as i32,
 			SocketOption::TlsSessionCache(_) => sys::NRF_SOL_SECURE as i32,
 			SocketOption::TlsTagList(_) => sys::NRF_SOL_SECURE as i32,
-			SocketOption::GnssFixInterval(_) => sys::NRF_SOL_GNSS as i32,
-			SocketOption::GnssFixRetry(_) => sys::NRF_SOL_GNSS as i32,
-			SocketOption::GnssNmeaMask(_) => sys::NRF_SOL_GNSS as i32,
-			SocketOption::GnssStart(_) => sys::NRF_SOL_GNSS as i32,
-			SocketOption::GnssStop => sys::NRF_SOL_GNSS as i32,
+			// SocketOption::GnssFixInterval(_) => sys::NRF_SOL_GNSS as i32,
+			// SocketOption::GnssFixRetry(_) => sys::NRF_SOL_GNSS as i32,
+			// SocketOption::GnssNmeaMask(_) => sys::NRF_SOL_GNSS as i32,
+			// SocketOption::GnssStart(_) => sys::NRF_SOL_GNSS as i32,
+			// SocketOption::GnssStop => sys::NRF_SOL_GNSS as i32,
+			_ => {0}
 		}
 	}
 
 	pub(crate) fn get_name(&self) -> i32 {
 		match self {
-			SocketOption::TlsHostName(_) => sys::NRF_SO_HOSTNAME as i32,
+			SocketOption::TlsHostName(_) => sys::NRF_SO_SEC_HOSTNAME as i32,
 			SocketOption::TlsPeerVerify(_) => sys::NRF_SO_SEC_PEER_VERIFY as i32,
 			SocketOption::TlsSessionCache(_) => sys::NRF_SO_SEC_SESSION_CACHE as i32,
 			SocketOption::TlsTagList(_) => sys::NRF_SO_SEC_TAG_LIST as i32,
-			SocketOption::GnssFixInterval(_) => sys::NRF_SO_GNSS_FIX_INTERVAL as i32,
-			SocketOption::GnssFixRetry(_) => sys::NRF_SO_GNSS_FIX_RETRY as i32,
-			SocketOption::GnssNmeaMask(_) => sys::NRF_SO_GNSS_NMEA_MASK as i32,
-			SocketOption::GnssStart(_) => sys::NRF_SO_GNSS_START as i32,
-			SocketOption::GnssStop => sys::NRF_SO_GNSS_STOP as i32,
+			//SocketOption::GnssFixInterval(_) => sys::NRF_SO_GNSS_FIX_INTERVAL as i32,
+			// SocketOption::GnssFixRetry(_) => sys::NRF_SO_GNSS_FIX_RETRY as i32,
+			//SocketOption::GnssNmeaMask(_) => sys::NRF_SO_GNSS_NMEA_MASK as i32,
+			//SocketOption::GnssStart(_) => sys::NRF_SO_GNSS_START as i32,
+			//SocketOption::GnssStop => sys::NRF_SO_GNSS_STOP as i32,
+			_ => {0}
 		}
 	}
 
@@ -310,9 +312,10 @@ impl From<SocketDomain> for i32 {
 	fn from(s: SocketDomain) -> i32 {
 		use SocketDomain::*;
 		match s {
-			Local => sys::NRF_AF_LOCAL as i32,
-			Lte => sys::NRF_AF_LTE as i32,
+			// Local => sys::NRF_AF_LOCAL as i32,
+			// Lte => sys::NRF_AF_LTE as i32,
 			Inet => sys::NRF_AF_INET as i32,
+			_ => {0}
 		}
 	}
 }
@@ -331,13 +334,14 @@ impl From<SocketProtocol> for i32 {
 	fn from(s: SocketProtocol) -> i32 {
 		use SocketProtocol::*;
 		match s {
-			At => sys::NRF_PROTO_AT as i32,
+			// At => sys::NRF_PROTO_AT as i32,
 			Tcp => sys::NRF_IPPROTO_TCP as i32,
 			Udp => sys::NRF_IPPROTO_UDP as i32,
 			Tls1v2 => sys::NRF_SPROTO_TLS1v2 as i32,
-			Tls1v3 => sys::NRF_SPROTO_TLS1v3 as i32,
+			// Tls1v3 => sys::NRF_SPROTO_TLS1v3 as i32,
 			Dtls1v2 => sys::NRF_SPROTO_DTLS1v2 as i32,
-			Gnss => sys::NRF_PROTO_GNSS as i32,
+			// Gnss => sys::NRF_PROTO_GNSS as i32,
+			_ => {0}
 		}
 	}
 }

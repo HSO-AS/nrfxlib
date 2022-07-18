@@ -33,6 +33,9 @@
 // Sub-Modules
 //******************************************************************************
 
+// Add tinyrlibc which implements a C library for nrfxlib.
+extern crate tinyrlibc;
+
 pub mod api;
 pub mod at;
 pub mod dtls;
@@ -160,7 +163,7 @@ pub fn init() -> Result<(), Error> {
 	unsafe {
 		/// Allocate some space in global data to use as a heap.
 		static mut HEAP_MEMORY: [u32; 1024] = [0u32; 1024];
-		let heap_start = HEAP_MEMORY.as_ptr() as usize;
+		let heap_start = HEAP_MEMORY.as_mut_ptr() as *mut u8;
 		let heap_size = HEAP_MEMORY.len() * core::mem::size_of::<u32>();
 		cortex_m::interrupt::free(|cs| {
 			*LIBRARY_ALLOCATOR.borrow(cs).borrow_mut() = Some(Heap::new(heap_start, heap_size))
@@ -192,13 +195,14 @@ pub fn init() -> Result<(), Error> {
 			trace: sys::nrf_modem_shmem_cfg__bindgen_ty_4 { base: 0, size: 0 },
 		},
 		ipc_irq_prio: 0,
+		fault_handler: Some(fault_handler),
 	};
 
 	unsafe {
 		// Use the same TX memory region as above
 		cortex_m::interrupt::free(|cs| {
 			*TX_ALLOCATOR.borrow(cs).borrow_mut() = Some(Heap::new(
-				params.shmem.tx.base as usize,
+				params.shmem.tx.base as *mut u8,
 				params.shmem.tx.size as usize,
 			))
 		});
@@ -214,6 +218,11 @@ pub fn init() -> Result<(), Error> {
 		trace!("nrfxlib init complete");
 		Ok(())
 	}
+}
+
+/// modem fault handler, prints errors in debug trace
+pub extern "C" fn fault_handler(fault_info: *mut sys::nrf_modem_fault_info) {
+	debug!("fault_handler: {:?}", fault_info);
 }
 
 /// Stop the NRF Modem library

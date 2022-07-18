@@ -51,7 +51,7 @@ use nrfxlib_sys as sys;
 /// You must call this when an EGU1 interrupt occurs.
 pub fn application_irq_handler() {
 	unsafe {
-		sys::nrf_modem_os_application_irq_handler();
+		sys::nrf_modem_application_irq_handler();
 	}
 }
 
@@ -59,7 +59,7 @@ pub fn application_irq_handler() {
 /// must call this when an EGU2 interrupt occurs.
 pub fn trace_irq_handler() {
 	unsafe {
-		sys::nrf_modem_os_trace_irq_handler();
+		sys::nrf_modem_trace_irq_handler();
 	}
 }
 

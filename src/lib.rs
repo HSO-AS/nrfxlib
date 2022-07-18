@@ -33,9 +33,6 @@
 // Sub-Modules
 //******************************************************************************
 
-// Add tinyrlibc which implements a C library for nrfxlib.
-extern crate tinyrlibc;
-
 pub mod api;
 pub mod at;
 pub mod dtls;

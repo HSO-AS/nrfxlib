@@ -63,7 +63,7 @@ use nrfxlib_sys as sys;
 //******************************************************************************
 mod prelude {
 	#[allow(unused_imports)]
-	pub(crate) use defmt::{Format, debug, trace, info, error, warn};
+	pub(crate) use defmt::{debug, error, info, trace, warn, Format};
 }
 
 use crate::prelude::*;
@@ -72,6 +72,18 @@ use crate::prelude::*;
 #[derive(Debug, Clone)]
 #[repr(transparent)]
 pub struct NrfSockAddrIn(sys::nrf_sockaddr_in);
+
+impl Format for NrfSockAddrIn {
+	fn format(&self, fmt: defmt::Formatter) {
+		defmt::write!(
+			fmt,
+			"NrfSockAddrIn {{ sin_len: {}, sin_port: {}, sin_addr: {} }}",
+			self.0.sin_len,
+			self.0.sin_port as u16,
+			self.0.sin_addr.s_addr as u32,
+		)
+	}
+}
 
 /// Create a camel-case type name for socket information.
 #[derive(Debug, Clone)]

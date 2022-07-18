@@ -20,7 +20,7 @@
 use super::{get_last_error, AtError, Error};
 use crate::raw::*;
 use core::fmt::Write;
-use log::debug;
+use defmt::{debug, Format};
 use nrfxlib_sys as sys;
 
 //******************************************************************************
@@ -28,13 +28,13 @@ use nrfxlib_sys as sys;
 //******************************************************************************
 
 /// Represents a connection to a remote TCP/IP device using TLS.
-#[derive(Debug)]
+#[derive(Debug, Format)]
 pub struct TlsSocket {
 	socket: Socket,
 }
 
 /// Specify which version of the TLS standard to use
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 pub enum Version {
 	/// TLS v1.2
 	Tls1v2,
@@ -43,7 +43,7 @@ pub enum Version {
 }
 
 /// Specify whether to verify the peer
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 pub enum PeerVerification {
 	/// Yes - check the peer's certificate is valid and abort if it isn't
 	Enabled,
@@ -54,14 +54,14 @@ pub enum PeerVerification {
 	Disabled,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 enum CredentialType {
 	RootCA = 0,
 	ClientCert = 1,
 	ClientPrivate = 2,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 enum CredentialOpcode {
 	Write = 0,
 	Delete = 3,

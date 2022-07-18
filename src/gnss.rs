@@ -20,6 +20,7 @@
 // Imports
 //******************************************************************************
 
+use defmt::Format;
 use super::{get_last_error, Error};
 use crate::raw::*;
 use nrfxlib_sys as sys;
@@ -29,7 +30,7 @@ use nrfxlib_sys as sys;
 //******************************************************************************
 
 /// Represents a connection to the GPS sub-system.
-#[derive(Debug)]
+#[derive(Debug, Format)]
 pub struct GnssSocket(Socket);
 
 /// Represents a position or NMEA string from the GNSS subsystem
@@ -50,7 +51,7 @@ pub enum GnssData {
 }
 
 /// Specifies which NMEA fields you want from the GNSS sub-system.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Format, Copy, Clone, Eq, PartialEq)]
 pub struct NmeaMask(u16);
 
 /// The specific fields you can enable or disable in an `NmeaMask`.
@@ -70,7 +71,7 @@ pub enum NmeaField {
 }
 
 /// Specifies which non-volatile fields you want to delete before starting the GNSS.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Format, Copy, Clone, Eq, PartialEq)]
 pub struct DeleteMask(u32);
 
 /// The specific fields you can enable or disable in a `DeleteMask`.

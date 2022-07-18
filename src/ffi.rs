@@ -8,14 +8,14 @@
 //! Dual-licensed under MIT and Apache 2.0. See the [README](../README.md) for
 //! more details.
 
-use log::debug;
+use defmt::{debug, Format};
 
 /// Number of IPC configurations in `NrfxIpcConfig`
 const IPC_CONF_NUM: usize = 8;
 
 /// Used by `libmodem` to configure the IPC peripheral. See `nrfx_ipc_config_t`
 /// in `nrfx/drivers/include/nrfx_ipc.h`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Format, Clone)]
 pub struct NrfxIpcConfig {
 	/// Configuration of the connection between signals and IPC channels.
 	send_task_config: [u32; IPC_CONF_NUM],
@@ -30,7 +30,7 @@ type NrfxIpcHandler = extern "C" fn(event_mask: u32, ptr: *mut u8);
 
 /// IPC error type
 #[repr(u32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 pub enum NrfxErr {
 	///< Operation performed successfully.
 	Success = 0x0BAD0000,

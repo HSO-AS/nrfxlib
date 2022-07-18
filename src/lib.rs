@@ -55,13 +55,18 @@ pub use raw::{poll, PollEntry, PollFlags, PollResult, Pollable};
 use core::cell::RefCell;
 use cortex_m::interrupt::Mutex;
 use linked_list_allocator::Heap;
-use log::{debug, trace};
 use nrf9160_pac as cpu;
 use nrfxlib_sys as sys;
 
 //******************************************************************************
 // Types
 //******************************************************************************
+mod prelude {
+	#[allow(unused_imports)]
+	pub(crate) use defmt::{Format, debug, trace, info, error, warn};
+}
+
+use crate::prelude::*;
 
 /// Create a camel-case type name for socket addresses.
 #[derive(Debug, Clone)]
@@ -82,7 +87,7 @@ impl core::ops::Deref for NrfSockAddrIn {
 }
 
 /// Errors that can be returned in response to an AT command.
-#[derive(Debug, Clone)]
+#[derive(Debug, Format, Clone)]
 pub enum AtError {
 	/// Plain `ERROR` response
 	Error,
@@ -93,7 +98,7 @@ pub enum AtError {
 }
 
 /// The set of error codes we can get from this API.
-#[derive(Debug, Clone)]
+#[derive(Debug, Format, Clone)]
 pub enum Error {
 	/// An error was returned by the Nordic library. We supply a string
 	/// descriptor, the return code, and the value of `errno`.

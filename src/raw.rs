@@ -19,6 +19,7 @@
 
 use super::{get_last_error, Error};
 use nrfxlib_sys as sys;
+use crate::prelude::*;
 
 //******************************************************************************
 // Types
@@ -26,13 +27,13 @@ use nrfxlib_sys as sys;
 
 /// Represents a connection to something - either the LTE stack itself, or
 /// some remote device.
-#[derive(Debug)]
+#[derive(Debug, Format)]
 pub struct Socket {
 	pub(crate) fd: i32,
 }
 
 /// The options that can be passed to a socket.
-#[derive(Debug)]
+#[derive(Debug, Format)]
 pub(crate) enum SocketOption<'a> {
 	/// Set the host name for the TLS certificate to match
 	TlsHostName(&'a str),
@@ -58,7 +59,7 @@ pub(crate) enum SocketOption<'a> {
 }
 
 /// The domain for a socket
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Format, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SocketDomain {
 	/// Corresponds to NRF_AF_LTE. Used for talking to the Nordic LTE modem.
 	Lte,
@@ -69,7 +70,7 @@ pub(crate) enum SocketDomain {
 }
 
 /// The type of socket (Stream, Datagram, or neither)
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Format, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SocketType {
 	/// Used with `SocketDomain::Inet` for TCP and TLS streams
 	Stream,
@@ -78,7 +79,7 @@ pub(crate) enum SocketType {
 }
 
 /// The protocol used on this socket.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Format, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SocketProtocol {
 	/// Used with `SocketDomain::Lte`
 	At,
@@ -111,7 +112,7 @@ pub struct PollEntry<'a> {
 }
 
 /// The ways in which you can poll on a particular socket
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 #[repr(i16)]
 pub enum PollFlags {
 	/// Wake up if this socket is readable
@@ -123,7 +124,7 @@ pub enum PollFlags {
 }
 
 /// The ways a socket can respond to a poll.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Format, Copy, Clone)]
 pub struct PollResult(u32);
 
 //******************************************************************************

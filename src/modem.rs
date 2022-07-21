@@ -18,14 +18,14 @@
 //******************************************************************************
 
 use crate::Error;
-use defmt::{debug, Format};
+use log::debug;
 
 //******************************************************************************
 // Types
 //******************************************************************************
 
 /// Identifies which radios in the nRF9160 should be active
-#[derive(Debug, Format, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum SystemMode {
 	/// LTE-M only
 	LteM,

@@ -21,7 +21,7 @@ pub use crate::tls::provision_certificates;
 
 use super::{get_last_error, Error};
 use crate::raw::*;
-use defmt::{debug, Format};
+use log::debug;
 use nrfxlib_sys as sys;
 
 //******************************************************************************
@@ -29,20 +29,20 @@ use nrfxlib_sys as sys;
 //******************************************************************************
 
 /// Represents a connection to a remote TCP/IP device using DTLS over UDP.
-#[derive(Debug, Format)]
+#[derive(Debug)]
 pub struct DtlsSocket {
 	socket: Socket,
 }
 
 /// Specify which version of the DTLS standard to use
-#[derive(Debug, Format, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Version {
 	/// DTLS v1.2
 	Dtls1v2,
 }
 
 /// Specify whether to verify the peer
-#[derive(Debug, Format, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum PeerVerification {
 	/// Yes - check the peer's certificate is valid and abort if it isn't
 	Enabled,

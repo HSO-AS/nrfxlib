@@ -37,7 +37,7 @@ pub mod api;
 pub mod at;
 pub mod dtls;
 mod ffi;
-pub mod gnss;
+pub mod gnss_socket;
 pub mod modem;
 mod raw;
 pub mod tcp;
@@ -55,35 +55,18 @@ pub use raw::{poll, PollEntry, PollFlags, PollResult, Pollable};
 use core::cell::RefCell;
 use cortex_m::interrupt::Mutex;
 use linked_list_allocator::Heap;
+use log::{debug, trace};
 use nrf9160_pac as cpu;
 use nrfxlib_sys as sys;
 
 //******************************************************************************
 // Types
 //******************************************************************************
-mod prelude {
-	#[allow(unused_imports)]
-	pub(crate) use defmt::{debug, error, info, trace, warn, Format};
-}
-
-use crate::prelude::*;
 
 /// Create a camel-case type name for socket addresses.
 #[derive(Debug, Clone)]
 #[repr(transparent)]
 pub struct NrfSockAddrIn(sys::nrf_sockaddr_in);
-
-impl Format for NrfSockAddrIn {
-	fn format(&self, fmt: defmt::Formatter) {
-		defmt::write!(
-			fmt,
-			"NrfSockAddrIn {{ sin_len: {}, sin_port: {}, sin_addr: {} }}",
-			self.0.sin_len,
-			self.0.sin_port as u16,
-			self.0.sin_addr.s_addr as u32,
-		)
-	}
-}
 
 /// Create a camel-case type name for socket information.
 #[derive(Debug, Clone)]
@@ -99,7 +82,7 @@ impl core::ops::Deref for NrfSockAddrIn {
 }
 
 /// Errors that can be returned in response to an AT command.
-#[derive(Debug, Format, Clone)]
+#[derive(Debug, Clone)]
 pub enum AtError {
 	/// Plain `ERROR` response
 	Error,
@@ -110,7 +93,7 @@ pub enum AtError {
 }
 
 /// The set of error codes we can get from this API.
-#[derive(Debug, Format, Clone)]
+#[derive(Debug, Clone)]
 pub enum Error {
 	/// An error was returned by the Nordic library. We supply a string
 	/// descriptor, the return code, and the value of `errno`.
@@ -172,21 +155,12 @@ static TX_ALLOCATOR: WrappedHeap = Mutex::new(RefCell::new(None));
 // Public Functions and Impl on Public Types
 //******************************************************************************
 
-/// Enum of the different startup modes the modem can be inn
-#[repr(u32)]
-pub enum ModemMode {
-	/// Normal mode
-	NormalMode=nrfxlib_sys::nrf_modem_mode_t_NORMAL_MODE,
-
-	/// DFU mode
-	FullDFUMode=nrfxlib_sys::nrf_modem_mode_t_FULL_DFU_MODE,
-}
 /// Start the NRF Modem library
-pub fn init(mode: ModemMode) -> Result<(), Error> {
+pub fn init() -> Result<(), Error> {
 	unsafe {
 		/// Allocate some space in global data to use as a heap.
 		static mut HEAP_MEMORY: [u32; 1024] = [0u32; 1024];
-		let heap_start = HEAP_MEMORY.as_mut_ptr() as *mut u8;
+		let heap_start = HEAP_MEMORY.as_ptr() as usize;
 		let heap_size = HEAP_MEMORY.len() * core::mem::size_of::<u32>();
 		cortex_m::interrupt::free(|cs| {
 			*LIBRARY_ALLOCATOR.borrow(cs).borrow_mut() = Some(Heap::new(heap_start, heap_size))
@@ -218,21 +192,20 @@ pub fn init(mode: ModemMode) -> Result<(), Error> {
 			trace: sys::nrf_modem_shmem_cfg__bindgen_ty_4 { base: 0, size: 0 },
 		},
 		ipc_irq_prio: 0,
-		fault_handler: Some(fault_handler),
 	};
 
 	unsafe {
 		// Use the same TX memory region as above
 		cortex_m::interrupt::free(|cs| {
 			*TX_ALLOCATOR.borrow(cs).borrow_mut() = Some(Heap::new(
-				params.shmem.tx.base as *mut u8,
+				params.shmem.tx.base as usize,
 				params.shmem.tx.size as usize,
 			))
 		});
 	}
 
 	// OK, let's start the library
-	let result = unsafe { sys::nrf_modem_init(&params, mode as u32) };
+	let result = unsafe { sys::nrf_modem_init(&params, sys::nrf_modem_mode_t_NORMAL_MODE) };
 
 	// Was it happy?
 	if result < 0 {
@@ -241,11 +214,6 @@ pub fn init(mode: ModemMode) -> Result<(), Error> {
 		trace!("nrfxlib init complete");
 		Ok(())
 	}
-}
-
-/// modem fault handler, prints errors in debug trace
-pub extern "C" fn fault_handler(fault_info: *mut sys::nrf_modem_fault_info) {
-	debug!("fault_handler: {:?}", fault_info);
 }
 
 /// Stop the NRF Modem library

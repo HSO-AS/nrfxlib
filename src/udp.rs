@@ -19,7 +19,7 @@
 
 use super::{get_last_error, Error};
 use crate::raw::*;
-use defmt::{debug, Format};
+use log::debug;
 use nrfxlib_sys as sys;
 
 //******************************************************************************
@@ -27,7 +27,7 @@ use nrfxlib_sys as sys;
 //******************************************************************************
 
 /// Represents a connection to a remote TCP/IP device using plain UDP
-#[derive(Debug, Format)]
+#[derive(Debug)]
 pub struct UdpSocket {
 	socket: Socket,
 }

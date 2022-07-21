@@ -19,7 +19,6 @@
 
 use super::{get_last_error, Error};
 use nrfxlib_sys as sys;
-use crate::prelude::*;
 
 //******************************************************************************
 // Types
@@ -27,13 +26,13 @@ use crate::prelude::*;
 
 /// Represents a connection to something - either the LTE stack itself, or
 /// some remote device.
-#[derive(Debug, Format)]
+#[derive(Debug)]
 pub struct Socket {
 	pub(crate) fd: i32,
 }
 
 /// The options that can be passed to a socket.
-#[derive(Debug, Format)]
+#[derive(Debug)]
 pub(crate) enum SocketOption<'a> {
 	/// Set the host name for the TLS certificate to match
 	TlsHostName(&'a str),
@@ -46,20 +45,22 @@ pub(crate) enum SocketOption<'a> {
 	TlsTagList(&'a [sys::nrf_sec_tag_t]),
 	/// Defines the interval between each fix in seconds. The default is 1. A
 	/// value of 0 means single-fix mode.
-	GnssFixInterval(u16),
+	GnssFixInterval(sys::nrf_gnss_fix_interval_t),
 	/// Defines how long (in seconds) the receiver should try to get a fix.
 	/// The default is 60 seconds. 0 means wait forever.
-	GnssFixRetry(u16),
+	GnssFixRetry(sys::nrf_gnss_fix_retry_t),
 	/// Controls which, if any, NMEA frames are provided by the GNSS system
-	GnssNmeaMask(u16),
+	GnssNmeaMask(sys::nrf_gnss_nmea_mask_t),
+	/// Controls the UseCase fields
+	GnssUseCase(sys::nrf_gnss_use_case_t),
 	/// Starts the GNSS system, after deleting the specified non-volatile values.
-	GnssStart(u32),
+	GnssStart(sys::nrf_gnss_delete_mask_t),
 	/// Stops the GNSS system
 	GnssStop,
 }
 
 /// The domain for a socket
-#[derive(Debug, Format, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SocketDomain {
 	/// Corresponds to NRF_AF_LTE. Used for talking to the Nordic LTE modem.
 	Lte,
@@ -70,7 +71,7 @@ pub(crate) enum SocketDomain {
 }
 
 /// The type of socket (Stream, Datagram, or neither)
-#[derive(Debug, Format, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SocketType {
 	/// Used with `SocketDomain::Inet` for TCP and TLS streams
 	Stream,
@@ -79,7 +80,7 @@ pub(crate) enum SocketType {
 }
 
 /// The protocol used on this socket.
-#[derive(Debug, Format, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum SocketProtocol {
 	/// Used with `SocketDomain::Lte`
 	At,
@@ -112,7 +113,7 @@ pub struct PollEntry<'a> {
 }
 
 /// The ways in which you can poll on a particular socket
-#[derive(Debug, Format, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 #[repr(i16)]
 pub enum PollFlags {
 	/// Wake up if this socket is readable
@@ -124,7 +125,7 @@ pub enum PollFlags {
 }
 
 /// The ways a socket can respond to a poll.
-#[derive(Debug, Format, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct PollResult(u32);
 
 //******************************************************************************
@@ -185,7 +186,7 @@ impl Socket {
 	pub fn write(&self, buf: &[u8]) -> Result<usize, Error> {
 		let length = buf.len();
 		let ptr = buf.as_ptr();
-		let result = unsafe { sys::nrf_send(self.fd, ptr as *const _, length as u32, 0) };
+		let result = unsafe { sys::nrf_write(self.fd, ptr as *const _, length as u32) };
 		if result < 0 {
 			Err(Error::Nordic("write", result as i32, get_last_error()))
 		} else {
@@ -256,27 +257,27 @@ impl<'a> SocketOption<'a> {
 			SocketOption::TlsPeerVerify(_) => sys::NRF_SOL_SECURE as i32,
 			SocketOption::TlsSessionCache(_) => sys::NRF_SOL_SECURE as i32,
 			SocketOption::TlsTagList(_) => sys::NRF_SOL_SECURE as i32,
-			// SocketOption::GnssFixInterval(_) => sys::NRF_SOL_GNSS as i32,
-			// SocketOption::GnssFixRetry(_) => sys::NRF_SOL_GNSS as i32,
-			// SocketOption::GnssNmeaMask(_) => sys::NRF_SOL_GNSS as i32,
-			// SocketOption::GnssStart(_) => sys::NRF_SOL_GNSS as i32,
-			// SocketOption::GnssStop => sys::NRF_SOL_GNSS as i32,
-			_ => {0}
+			SocketOption::GnssFixInterval(_) => sys::NRF_SOL_GNSS as i32,
+			SocketOption::GnssFixRetry(_) => sys::NRF_SOL_GNSS as i32,
+			SocketOption::GnssNmeaMask(_) => sys::NRF_SOL_GNSS as i32,
+			SocketOption::GnssUseCase(_) => sys::NRF_SOL_GNSS as i32,
+			SocketOption::GnssStart(_) => sys::NRF_SOL_GNSS as i32,
+			SocketOption::GnssStop => sys::NRF_SOL_GNSS as i32,
 		}
 	}
 
 	pub(crate) fn get_name(&self) -> i32 {
 		match self {
-			SocketOption::TlsHostName(_) => sys::NRF_SO_SEC_HOSTNAME as i32,
+			SocketOption::TlsHostName(_) => sys::NRF_SO_HOSTNAME as i32,
 			SocketOption::TlsPeerVerify(_) => sys::NRF_SO_SEC_PEER_VERIFY as i32,
 			SocketOption::TlsSessionCache(_) => sys::NRF_SO_SEC_SESSION_CACHE as i32,
 			SocketOption::TlsTagList(_) => sys::NRF_SO_SEC_TAG_LIST as i32,
-			//SocketOption::GnssFixInterval(_) => sys::NRF_SO_GNSS_FIX_INTERVAL as i32,
-			// SocketOption::GnssFixRetry(_) => sys::NRF_SO_GNSS_FIX_RETRY as i32,
-			//SocketOption::GnssNmeaMask(_) => sys::NRF_SO_GNSS_NMEA_MASK as i32,
-			//SocketOption::GnssStart(_) => sys::NRF_SO_GNSS_START as i32,
-			//SocketOption::GnssStop => sys::NRF_SO_GNSS_STOP as i32,
-			_ => {0}
+			SocketOption::GnssFixInterval(_) => sys::NRF_SO_GNSS_FIX_INTERVAL as i32,
+			SocketOption::GnssFixRetry(_) => sys::NRF_SO_GNSS_FIX_RETRY as i32,
+			SocketOption::GnssNmeaMask(_) => sys::NRF_SO_GNSS_NMEA_MASK as i32,
+			SocketOption::GnssUseCase(_) => sys::NRF_SO_GNSS_USE_CASE as i32,
+			SocketOption::GnssStart(_) => sys::NRF_SO_GNSS_START as i32,
+			SocketOption::GnssStop => sys::NRF_SO_GNSS_STOP as i32,
 		}
 	}
 
@@ -289,6 +290,7 @@ impl<'a> SocketOption<'a> {
 			SocketOption::GnssFixInterval(x) => x as *const _ as *const sys::ctypes::c_void,
 			SocketOption::GnssFixRetry(x) => x as *const _ as *const sys::ctypes::c_void,
 			SocketOption::GnssNmeaMask(x) => x as *const _ as *const sys::ctypes::c_void,
+			SocketOption::GnssUseCase(x) => x as *const _ as *const sys::ctypes::c_void,
 			SocketOption::GnssStart(x) => x as *const _ as *const sys::ctypes::c_void,
 			SocketOption::GnssStop => core::ptr::null(),
 		}
@@ -303,6 +305,7 @@ impl<'a> SocketOption<'a> {
 			SocketOption::GnssFixInterval(x) => core::mem::size_of_val(x) as u32,
 			SocketOption::GnssFixRetry(x) => core::mem::size_of_val(x) as u32,
 			SocketOption::GnssNmeaMask(x) => core::mem::size_of_val(x) as u32,
+			SocketOption::GnssUseCase(x) => core::mem::size_of_val(x) as u32,
 			SocketOption::GnssStart(x) => core::mem::size_of_val(x) as u32,
 			SocketOption::GnssStop => 0u32,
 		}
@@ -313,10 +316,9 @@ impl From<SocketDomain> for i32 {
 	fn from(s: SocketDomain) -> i32 {
 		use SocketDomain::*;
 		match s {
-			// Local => sys::NRF_AF_LOCAL as i32,
-			// Lte => sys::NRF_AF_LTE as i32,
+			Local => sys::NRF_AF_LOCAL as i32,
+			Lte => sys::NRF_AF_LTE as i32,
 			Inet => sys::NRF_AF_INET as i32,
-			_ => {0}
 		}
 	}
 }
@@ -335,14 +337,13 @@ impl From<SocketProtocol> for i32 {
 	fn from(s: SocketProtocol) -> i32 {
 		use SocketProtocol::*;
 		match s {
-			// At => sys::NRF_PROTO_AT as i32,
+			At => sys::NRF_PROTO_AT as i32,
 			Tcp => sys::NRF_IPPROTO_TCP as i32,
 			Udp => sys::NRF_IPPROTO_UDP as i32,
 			Tls1v2 => sys::NRF_SPROTO_TLS1v2 as i32,
-			// Tls1v3 => sys::NRF_SPROTO_TLS1v3 as i32,
+			Tls1v3 => sys::NRF_SPROTO_TLS1v3 as i32,
 			Dtls1v2 => sys::NRF_SPROTO_DTLS1v2 as i32,
-			// Gnss => sys::NRF_PROTO_GNSS as i32,
-			_ => {0}
+			Gnss => sys::NRF_PROTO_GNSS as i32,
 		}
 	}
 }

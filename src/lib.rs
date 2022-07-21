@@ -172,8 +172,17 @@ static TX_ALLOCATOR: WrappedHeap = Mutex::new(RefCell::new(None));
 // Public Functions and Impl on Public Types
 //******************************************************************************
 
+/// Enum of the different startup modes the modem can be inn
+#[repr(u32)]
+pub enum ModemMode {
+	/// Normal mode
+	NormalMode=nrfxlib_sys::nrf_modem_mode_t_NORMAL_MODE,
+
+	/// DFU mode
+	FullDFUMode=nrfxlib_sys::nrf_modem_mode_t_FULL_DFU_MODE,
+}
 /// Start the NRF Modem library
-pub fn init() -> Result<(), Error> {
+pub fn init(mode: ModemMode) -> Result<(), Error> {
 	unsafe {
 		/// Allocate some space in global data to use as a heap.
 		static mut HEAP_MEMORY: [u32; 1024] = [0u32; 1024];
@@ -223,7 +232,7 @@ pub fn init() -> Result<(), Error> {
 	}
 
 	// OK, let's start the library
-	let result = unsafe { sys::nrf_modem_init(&params, sys::nrf_modem_mode_t_NORMAL_MODE) };
+	let result = unsafe { sys::nrf_modem_init(&params, mode as u32) };
 
 	// Was it happy?
 	if result < 0 {
